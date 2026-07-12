@@ -1,1 +1,4 @@
-...
+
+data:
+  raw_path: "Data/raw/german_credit_data.csv"
+  processed_path: "Data/processed/cleaned.csv"
