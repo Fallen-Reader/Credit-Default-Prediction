@@ -43,7 +43,7 @@ BINARY_MAPS = {
 }
 
 NOMINAL_COLS = [
-    'sex'
+    'sex',
     'credit_history',
     'other_installment_plans',
     'housing',
@@ -70,13 +70,58 @@ def encode(df):
         if col in df.columns:
             df[col] = df[col].map(mapping)
 
-    # Nominal — one-hot
+    # Nominal - one-hot
     nominal = [c for c in NOMINAL_COLS if c in df.columns]
-    df = pd.get_dummies(df, columns=nominal, drop_first=True,dtype=int)
+    df = pd.get_dummies(df, columns=nominal, drop_first=False,dtype=int)
 
     return df
 
 
 en_df = encode(df)
 
-print(en_df['credit_history'])
+numerical_continuous = ['month_duration', 'credit_amount_log', 'loan_burden', 
+                        'risk_combo', 'financial_health', 'employment_stability',
+                        'loan_to_income_proxy', 'total_credit_exposure', 'age']
+
+
+def normalize(X_train, X_test, continuous_indices):
+    mu    = X_train[:, continuous_indices].mean(axis=0)
+    sigma = X_train[:, continuous_indices].std(axis=0)
+    sigma[sigma == 0] = 1    
+    X_train_n = X_train.copy().astype(float)
+    X_test_n  = X_test.copy().astype(float)
+
+    X_train_n[:, continuous_indices] = (X_train[:, continuous_indices] - mu) / sigma
+    X_test_n[:,  continuous_indices] = (X_test[:,  continuous_indices] - mu) / sigma
+
+    return X_train_n, X_test_n, mu, sigma
+
+
+
+def split(X, y, test_size=0.2, seed=42):
+    np.random.seed(seed)
+    idx = np.random.permutation(len(X))
+    n_train = int((1 - test_size) * len(X))
+    return (X[idx[:n_train]], X[idx[n_train:]],
+            y[idx[:n_train]], y[idx[n_train:]])
+
+def process(config):
+    target = config['data']['target_col']
+    Y = en_df[target]
+    X = en_df.drop([target],axis=1)
+
+    testsize,seed = config['split']['test_size'],config['split']['random_seed']
+
+    X_train, X_test, y_train, y_test = split(
+        X, Y,
+        test_size=testsize,
+        seed=seed
+    )
+
+    X_train_n, X_test_n, mu, sigma = normalize(X_train, X_test, numerical_continuous)
+
+    return X_train_n, X_test_n, y_train, y_test , mu, sigma
+
+if __name__ == "__main__":
+    X_train_n, X_test_n, y_train, y_test , mu, sigma=process(config)
+

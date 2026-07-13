@@ -2,3 +2,8 @@
 data:
   raw_path: "Data/raw/german_credit_data.csv"
   processed_path: "Data/processed/cleaned.csv"
+  target_col: "target"
+
+split:
+  test_size: 0.2
+  random_seed: 42
