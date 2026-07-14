@@ -83,6 +83,11 @@ numerical_continuous = ['month_duration', 'credit_amount_log', 'loan_burden',
                         'risk_combo', 'financial_health', 'employment_stability',
                         'loan_to_income_proxy', 'total_credit_exposure', 'age']
 
+def get_continuous_indices(df, config):
+    feature_cols = [c for c in df.columns if c != config['data']['target_col']]
+    cont_names   = numerical_continuous
+    indices      = [feature_cols.index(c) for c in cont_names if c in feature_cols]
+    return indices
 
 def normalize(X_train, X_test, continuous_indices):
     mu    = X_train[:, continuous_indices].mean(axis=0)
@@ -107,8 +112,8 @@ def split(X, y, test_size=0.2, seed=42):
 
 def process(config):
     target = config['data']['target_col']
-    Y = en_df[target]
-    X = en_df.drop([target],axis=1)
+    Y = en_df[target].values.astype(int)
+    X = en_df.drop([target],axis=1).values.astype(float)
 
     testsize,seed = config['split']['test_size'],config['split']['random_seed']
 
@@ -118,10 +123,27 @@ def process(config):
         seed=seed
     )
 
-    X_train_n, X_test_n, mu, sigma = normalize(X_train, X_test, numerical_continuous)
+    feature_df = df.drop(columns=[target])
+    cont_idx   = get_continuous_indices(feature_df, config)
+
+    X_train_n, X_test_n, mu, sigma = normalize(X_train, X_test, cont_idx)
 
     return X_train_n, X_test_n, y_train, y_test , mu, sigma
 
 if __name__ == "__main__":
     X_train_n, X_test_n, y_train, y_test , mu, sigma=process(config)
+
+    feature_cols = [c for c in en_df.columns if c != 'target']
+
+    X_train_df = pd.DataFrame(X_train_n, columns=feature_cols)
+    X_test_df  = pd.DataFrame(X_test_n,  columns=feature_cols)
+
+    X_train_df['target'] = y_train
+    X_test_df['target']  = y_test
+
+    X_train_df.to_csv('../Data/processed/train.csv', index=False)
+    X_test_df.to_csv('../Data/processed/test.csv',index=False)
+
+    print(f"Train saved: {X_train_df.shape}")
+    print(f"Test saved:  {X_test_df.shape}")
 
