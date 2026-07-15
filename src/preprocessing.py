@@ -38,7 +38,7 @@ ORDINAL_MAPS = {
 }
 
 BINARY_MAPS = {
-    'telephone':        {'none': 0, 'yes': 1},
+    'telephone': {'no': 0, 'yes': 1},
     'is_foreign_worker': {'yes': 1, 'no': 0},
 }
 

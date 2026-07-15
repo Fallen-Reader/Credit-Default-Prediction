@@ -12,20 +12,23 @@ warnings.filterwarnings('ignore')
 import yaml
 import importlib
 import joblib
+import os
 
 with open("config.yaml") as f:
     config = yaml.safe_load(f)
 
+train_df = pd.read_csv(config['data']['train_ds'])
+X_train = train_df.drop(columns=['target']).values
+y_train = train_df['target'].values
 
-X_train = pd.read_csv(config['data']['train_ds']).drop(columns=['target']).values
-y_train = pd.read_csv(config['data']['train_ds'])['target'].values
-X_test  = pd.read_csv(config['data']['test_ds']).drop(columns=['target']).values
-y_test  = pd.read_csv(config['data']['test_ds'])['target'].values
+test_df = pd.read_csv(config['data']['test_ds'])
+X_test  = test_df.drop(columns=['target']).values
+y_test  = test_df['target'].values
 
 
-def evaluate(name, model, X_train, y_train, X_test, y_test):
+def evaluate(name, model, X_train, y_train, X_test, y_test,save_dir):
     model.fit(X_train, y_train)
-
+    
     y_pred = model.predict(X_test)
     y_prob = model.predict_proba(X_test)[:, 1]
 
@@ -43,7 +46,11 @@ def evaluate(name, model, X_train, y_train, X_test, y_test):
     print(f"Actual Good (0)    [{cm[0,0]:4d}]  [{cm[0,1]:4d}]  ← {cm[0,1]} false alarms")
     print(f"Actual Bad  (1)    [{cm[1,0]:4d}]  [{cm[1,1]:4d}]  ← {cm[1,0]} missed defaults")
     print(f"\nMissed defaults (FN={cm[1,0]}) = loans approved that will default")
-
+    
+    
+    model_path = os.path.join(save_dir, f"{name.lower().replace(' ', '_')}.pkl")
+    joblib.dump(model, model_path)
+    print(f"Saved -> {model_path}")
     return {
         'model': model,
         'auc':   auc,
@@ -58,7 +65,7 @@ def get_model_class(class_path):
     return getattr(module, class_name)
 
 
-def train_all_models(config):
+def train_all_models(config,X_train, y_train, X_test, y_test):
     results = {}
     for model_name, model_config in config['models'].items():
         print(f"\\nTraining {model_name}...")
@@ -73,10 +80,10 @@ def train_all_models(config):
         
         model = ModelClass(**params)
         
-
+        save_dir = config['output']['model_dir']
         results[model_name] = evaluate(
             model_name, model,
-            X_train, y_train, X_test, y_test
+            X_train, y_train, X_test, y_test,save_dir
         )
 
         results_df = pd.DataFrame({
@@ -91,4 +98,4 @@ def train_all_models(config):
     return results_df
 
 if __name__=='__main__':
-    result:dict = train_all_models(config)
+    result:dict = train_all_models(config,X_train, y_train, X_test, y_test)

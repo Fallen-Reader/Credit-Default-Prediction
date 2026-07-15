@@ -79,3 +79,15 @@ metrics:
   - "precision"
   - "recall"
   - "f1"
+
+output:
+  model_dir: "outputs/models/"
+  plots_dir: "outputs/plots/"
+  result_: "outputs/result.csv"
+
+model_path:
+  DecisionTree: "outputs/models/decisiontree.pkl"
+  SVM: "outputs/models/svm.pkl"
+  GradientBoosting: "outputs/models/gradientboosting.pkl"
+  RandomForest_Balanced: "outputs/models/randomforest_balanced.pkl"
+  NaiveBayes: "outputs/models/naivebayes.pkl"
