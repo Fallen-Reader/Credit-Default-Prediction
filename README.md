@@ -76,12 +76,10 @@ credit-default-prediction/
 │   ├── data_loader.py
 │   ├── preprocessing.py
 │   ├── models/
-│   │   ├── logistic_regression.py
-│   │   ├── naive_bayes.py
-│   │   ├── decision_tree.py
-│   │   └── random_forest.py
+│   │   └── train_model.py 
 │   └── evaluate.py
 ├── train.py
+├── predict.py
 ├── config.yaml
 ├── requirements.txt
 └── README.md
@@ -91,10 +89,10 @@ credit-default-prediction/
 
 🔄 In Progress
 
-- [x] EDA — class balance, distributions, correlation analysis
-- [ ] Feature engineering
-- [ ] Preprocessing pipeline
-- [ ] Model training — Logistic Regression, Naive Bayes, Decision Tree, Random Forest
+- [x] EDA - class balance, distributions, correlation analysis
+- [x] Feature engineering
+- [x] Preprocessing pipeline
+- [x] Model training - Logistic Regression, Naive Bayes, Decision Tree, Random Forest
 - [ ] Interpretability — feature importance, coefficient analysis
 - [ ] Evaluation — comparison across models
 
