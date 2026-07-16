@@ -1,12 +1,11 @@
 import pandas as pd
-import numpy as np 
+import numpy as np
+from sklearn.model_selection import train_test_split
 import yaml
 
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
-
-df  = pd.read_csv(config['data']['processed_path'])
 
 
 ORDINAL_MAPS = {
@@ -77,8 +76,6 @@ def encode(df):
     return df
 
 
-en_df = encode(df)
-
 numerical_continuous = ['month_duration', 'credit_amount_log', 'loan_burden', 
                         'risk_combo', 'financial_health', 'employment_stability',
                         'loan_to_income_proxy', 'total_credit_exposure', 'age']
@@ -103,27 +100,21 @@ def normalize(X_train, X_test, continuous_indices):
 
 
 
-def split(X, y, test_size=0.2, seed=42):
-    np.random.seed(seed)
-    idx = np.random.permutation(len(X))
-    n_train = int((1 - test_size) * len(X))
-    return (X[idx[:n_train]], X[idx[n_train:]],
-            y[idx[:n_train]], y[idx[n_train:]])
-
-def process(config):
+def process(df,config):
     target = config['data']['target_col']
     Y = en_df[target].values.astype(int)
     X = en_df.drop([target],axis=1).values.astype(float)
 
     testsize,seed = config['split']['test_size'],config['split']['random_seed']
 
-    X_train, X_test, y_train, y_test = split(
+    X_train, X_test, y_train, y_test = train_test_split(
         X, Y,
         test_size=testsize,
-        seed=seed
+        random_state=seed,
+        stratify=Y if config['data']['stratify'] else None
     )
 
-    feature_df = df.drop(columns=[target])
+    feature_df = df.drop(columns=['target'])
     cont_idx   = get_continuous_indices(feature_df, config)
 
     X_train_n, X_test_n, mu, sigma = normalize(X_train, X_test, cont_idx)
@@ -131,7 +122,12 @@ def process(config):
     return X_train_n, X_test_n, y_train, y_test , mu, sigma
 
 if __name__ == "__main__":
-    X_train_n, X_test_n, y_train, y_test , mu, sigma=process(config)
+
+    df  = pd.read_csv(config['data']['processed_path'])
+
+    en_df = encode(df)
+
+    X_train_n, X_test_n, y_train, y_test , mu, sigma=process(en_df,config)
 
     feature_cols = [c for c in en_df.columns if c != 'target']
 

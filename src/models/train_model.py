@@ -26,7 +26,7 @@ X_test  = test_df.drop(columns=['target']).values
 y_test  = test_df['target'].values
 
 
-def evaluate(name, model, X_train, y_train, X_test, y_test,save_dir):
+def evaluate(name, model, X_train, y_train, X_test, y_test,save_dir,verbose=True):
     model.fit(X_train, y_train)
     
     y_pred = model.predict(X_test)
@@ -34,18 +34,18 @@ def evaluate(name, model, X_train, y_train, X_test, y_test,save_dir):
 
     cm  = confusion_matrix(y_test, y_pred)
     auc = roc_auc_score(y_test, y_prob)
-
-    print(f"\n{'='*55}")
-    print(f"  {name}")
-    print(f"{'='*55}")
-    print(f"AUC-ROC : {auc:.4f}")
-    print(f"\n{classification_report(y_test, y_pred, target_names=['Good (0)', 'Bad (1)'])}")
-    print(f"Confusion Matrix:")
-    print(f"                     Predicted")
-    print(f"                     Good    Bad")
-    print(f"Actual Good (0)    [{cm[0,0]:4d}]  [{cm[0,1]:4d}]  ← {cm[0,1]} false alarms")
-    print(f"Actual Bad  (1)    [{cm[1,0]:4d}]  [{cm[1,1]:4d}]  ← {cm[1,0]} missed defaults")
-    print(f"\nMissed defaults (FN={cm[1,0]}) = loans approved that will default")
+    if verbose:
+        print(f"\n{'='*55}")
+        print(f"  {name}")
+        print(f"{'='*55}")
+        print(f"AUC-ROC : {auc:.4f}")
+        print(f"\n{classification_report(y_test, y_pred, target_names=['Good (0)', 'Bad (1)'])}")
+        print(f"Confusion Matrix:")
+        print(f"                     Predicted")
+        print(f"                     Good    Bad")
+        print(f"Actual Good (0)    [{cm[0,0]:4d}]  [{cm[0,1]:4d}]  ← {cm[0,1]} false alarms")
+        print(f"Actual Bad  (1)    [{cm[1,0]:4d}]  [{cm[1,1]:4d}]  ← {cm[1,0]} missed defaults")
+        print(f"\nMissed defaults (FN={cm[1,0]}) = loans approved that will default")
     
     
     model_path = os.path.join(save_dir, f"{name.lower().replace(' ', '_')}.pkl")
@@ -81,9 +81,10 @@ def train_all_models(config,X_train, y_train, X_test, y_test):
         model = ModelClass(**params)
         
         save_dir = config['output']['model_dir']
+        verbose = config['data']['verbose']
         results[model_name] = evaluate(
             model_name, model,
-            X_train, y_train, X_test, y_test,save_dir
+            X_train, y_train, X_test, y_test,save_dir,verbose
         )
 
         results_df = pd.DataFrame({

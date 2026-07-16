@@ -3,9 +3,9 @@ import joblib
 import yaml
 import argparse
 
-def predict_single(model_name, applicant_data):
-   
-    model_path = f"outputs/models/{model_name}.pkl"
+def predict_single(model_name, applicant_data,config):
+    path = config['output']['model_dir']
+    model_path = f"{path+(model_name).lower()}.pkl"
     model = joblib.load(model_path)
 
     prob = model.predict_proba(applicant_data)[:, 1][0]
@@ -33,5 +33,5 @@ if __name__ == '__main__':
     model_name = ...
     print(f"Actual label: {'Default' if actual == 1 else 'Good'}")
 
-    predict_single("RandomForest_Balanced", applicant)
-    predict_single("GradientBoosting", applicant)
+    predict_single("RandomForest", applicant,config)
+    predict_single("GradientBoosting", applicant,config)
