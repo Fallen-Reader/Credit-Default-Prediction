@@ -1,0 +1,9 @@
+Model                      , AUC               , TP , TN, FP, FN
+LogisticRegression         , 0.76              , 122, 28, 32, 18
+LogisticRegression_Balanced, 0.768095238095238 ,  97, 46, 14, 43
+NaiveBayes                 , 0.7183333333333334, 105, 34, 26, 35
+DecisionTree               , 0.7235714285714288, 121, 26, 34, 19
+RandomForest               , 0.800952380952381 , 133, 19, 41,  7
+RandomForest_Balanced      , 0.7891666666666666,  95, 45, 15, 45
+GradientBoosting           , 0.7841666666666667, 123, 30, 30, 17
+SVM                        , 0.7863690476190477, 127, 22, 38, 13
