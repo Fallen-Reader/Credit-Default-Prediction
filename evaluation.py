@@ -69,11 +69,97 @@ axes[2].set_xlabel("Importance")
 
 plt.tight_layout()
 plots_dir = config['output']['plots_dir']
-#os.makedirs("outputs/plots", exist_ok=True)
+os.makedirs(plots_dir, exist_ok=True)
 plt.savefig(f"{plots_dir}evaluation.png", dpi=150, bbox_inches='tight')
 #plt.show()
-
+plt.close()
 
 print("\nBest Model - Final Report")
 print(classification_report(y_test, y_pred,
       target_names=['Good (0)', 'Bad (1)']))
+
+import shap
+
+rf = joblib.load(config['model_path']['random_forest_tuned'])
+
+explainer   = shap.TreeExplainer(rf)
+shap_values = explainer.shap_values(X_test)
+
+
+# Global bar chart
+shap.summary_plot(
+    shap_values[:,:,0],
+    X_test,
+    feature_names=feat_names,
+    plot_type="bar",
+    show=False          
+)
+plt.title("SHAP Feature Importance — Random Forest")
+plt.tight_layout()
+plt.savefig(f"{plots_dir}shap_importance.png", dpi=150, bbox_inches='tight')
+plt.close()          
+print("Saved -> shap_importance.png")
+
+# Global summary (direction of impact)
+shap.summary_plot(
+    shap_values[:,:,0],
+    X_test,
+    feature_names=feat_names,
+    show=False
+)
+plt.title("SHAP Summary — Feature Impact Direction")
+plt.tight_layout()
+plt.savefig(f"{plots_dir}shap_summary.png", dpi=150, bbox_inches='tight')
+plt.close()
+print("Saved -> shap_summary.png")
+
+# Local waterfall for a missed default
+
+fn_indices = np.where((y_pred == 0) & (y_test == 1))[0]
+
+if len(fn_indices) > 0:
+    fn_idx = fn_indices[0]
+
+    shap.waterfall_plot(
+        shap.Explanation(
+            values        = shap_values[:,:,0][fn_idx],
+            base_values   = explainer.expected_value[1],
+            data          = X_test[fn_idx],
+            feature_names = feat_names
+        ),
+        show=False
+    )
+    plt.title("Why This Default Was Missed")
+    plt.tight_layout()
+    plt.savefig(f"{plots_dir}shap_missed_default.png",
+                dpi=150, bbox_inches='tight')
+    plt.close()
+    print("Saved -> shap_missed_default.png")
+
+# Local waterfall for a correct default catch 
+tp_indices = np.where((y_pred == 1) & (y_test == 1))[0]
+
+if len(tp_indices) > 0:
+    tp_idx = tp_indices[0]
+
+    shap.waterfall_plot(
+        shap.Explanation(
+            values        = shap_values[:,:,0][tp_idx],
+            base_values   = explainer.expected_value[1],
+            data          = X_test[tp_idx],
+            feature_names = feat_names
+        ),
+        show=False
+    )
+    plt.title("Why This Default Was Correctly Flagged")
+    plt.tight_layout()
+    plt.savefig(f"{plots_dir}shap_correct_default.png",
+                dpi=150, bbox_inches='tight')
+    plt.close()
+    print("Saved -> shap_correct_default.png")
+
+print("\nBusiness Decision Rules (threshold=0.45)")
+print("─"*45)
+print(f"P(default) < 0.35    →  Auto-approve  ({np.sum(y_prob < 0.35)} applicants)")
+print(f"P(default) 0.35 - 0.45 →  Manual review ({np.sum((y_prob >= 0.35) & (y_prob < 0.45))} applicants)")
+print(f"P(default) > 0.45    →  Auto-reject   ({np.sum(y_prob >= 0.45)} applicants)")
